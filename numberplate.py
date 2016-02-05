@@ -90,8 +90,8 @@ def main():
         imgROIResized = cv2.resize(imgROI, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
         npaROIResized = imgROIResized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
         # npaROIResized = imgROIResized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
-        cv2.namedWindow('dICK'+str(i),cv2.WINDOW_NORMAL)
-        cv2.imshow('dICK'+str(i),imgROI)
+        cv2.namedWindow('Detected Contours'+str(i),cv2.WINDOW_NORMAL)
+        cv2.imshow('Detected Contours'+str(i),imgROI)
         cv2.waitKey(0)
 
 
