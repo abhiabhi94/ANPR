@@ -51,8 +51,8 @@ def main():
 
 	img = cv2.imread(PATH)
 	x = img.shape [:2]
-	z = x[1] / 2000 if (x[1] > x[0]) else x[0] / 2000
-	a = 0.2
+	resizingParameter = x[1] / 1000 if (x[1] > x[0]) else x[0] / 1000
+	increment = 0.2
 
 	for counter in xrange(1 , 20 , 1):
 
@@ -60,8 +60,8 @@ def main():
 		validContoursWithData = []
 		PlatesContour = []
 		crossingContour = []
-		imgROI = cv2.resize(img , ( int(x[1]/z) , int(x[0]/z) ))
-		z = z + a
+		imgROI = cv2.resize(img , ( int(x[1]/resizingParameter) , int(x[0]/resizingParameter) ))
+		resizingParameter = resizingParameter + increment
 		# print counter
 		# if (counter <= 0):
 		#     print counter
