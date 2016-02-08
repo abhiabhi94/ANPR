@@ -6,13 +6,9 @@ MIN_CONTOUR_AREA = 200.0
 MAX_CONTOUR_AREA = 500.0
 RESIZED_IMAGE_WIDTH = 100
 RESIZED_IMAGE_HEIGHT = 100
-PATH = 'testImages/sample2.jpg'
+PATH = 'testImages/sample9.jpg'
 
-# plateTemplate = cv2.imread('plateTemplate.jpg')
-# farjiReturnValue , threshedPlate = cv2.threshold(plateTemplate , 100 , 255 , cv2.THRESH_BINARY_INV )
-# platesContour , platesHierarchy = cv2.findContours(threshedPlate , cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-# cv2.drawContours( plateTemplate , platesContour , (0,255,0) , 2)
-# cv2.imshow('number plate shape' , plateTemplate)
+
 class ContourWithData():
 
 	npaContour = None           # contour
@@ -24,6 +20,7 @@ class ContourWithData():
 	fltArea = 0.0               # area of contour
 
 	def calculateRectTopLeftPointAndWidthAndHeight(self):               # calculate bounding rect info
+		
 		[intX, intY, intWidth, intHeight] = self.boundingRect
 		self.intRectX = intX
 		self.intRectY = intY
@@ -31,7 +28,7 @@ class ContourWithData():
 		self.intRectHeight = intHeight
 
 
-	def checkIfContourIsValid(self):                            # this is oversimplified, for a production grade program
+	def checkIfContourIsValid(self):                            # contour selection
 		ratio = float( self.intRectWidth ) / self.intRectHeight
 		if ratio > 2  and ratio < 5 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA) : return True        # much better validity checking would be necessary
 		return False
@@ -40,11 +37,11 @@ class ContourWithData():
 def preprocessing(img):
 
 	imgCopy=img.copy()
-	img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+	img=cv2.cvtColor(img , cv2.COLOR_BGR2GRAY)
 	imgGrayCopy=img.copy()
-	imgBlur = cv2.GaussianBlur(img , (5,5) , 0)
-	edge = cv2.Canny( imgBlur , 100 , 255 )
-	return edge,imgGrayCopy,imgCopy
+	# imgBlur = cv2.GaussianBlur(img , (5,5) , 0)
+	edge = cv2.Canny (img , 100 , 255 )
+	return edge , imgGrayCopy , imgCopy
 
 
 def main():
@@ -60,8 +57,8 @@ def main():
 		validContoursWithData = []
 		PlatesContour = []
 		crossingContour = []
-		imgROI = cv2.resize(img , ( int(x[1]/resizingParameter) , int(x[0]/resizingParameter) ))
-		resizingParameter = resizingParameter + increment
+		imgResized = cv2.resize(img , ( int(x[1]/resizingParameter) , int(x[0]/resizingParameter) ))
+		
 		# print counter
 		# if (counter <= 0):
 		#     print counter
@@ -112,31 +109,20 @@ def main():
 		#             PlatesContour.append(contourWithData)
 		# cv2.imshow("Number Plates",imgCopy)
 		# cv2.waitKey(0)
-		# validContoursWithData.sort(key = operator.attrgetter("intRectX"))
 		# i=0
 
-		# for contourWithData in validContoursWithData:
-		#     i+=1
-		#     cv2.rectangle(img,(contourWithData.intRectX, contourWithData.intRectY),(contourWithData.intRectX + contourWithData.intRectWidth, contourWithData.intRectY + contourWithData.intRectHeight),(0, 255, 0),2)
-		#     imgROI = img[contourWithData.intRectY : contourWithData.intRectY + contourWithData.intRectHeight,contourWithData.intRectX : contourWithData.intRectX + contourWithData.intRectWidth]
-		#     imgROIResized = cv2.resize(imgROI, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
-		#     npaROIResized = imgROIResized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
-		#     # npaROIResized = imgROIResized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
-		#     cv2.namedWindow('Detected Contours'+str(i),cv2.WINDOW_NORMAL)
-		#     cv2.imshow('Detected Contours'+str(i),imgROI)
-		#     cv2.waitKey(0)
 
 		
-		edge,imgGrayCopy,imgCopy = preprocessing(imgROI)
+		edge , imgGrayCopy , imgCopy = preprocessing (imgResized)
 		# imgBlur = cv2.GaussianBlur(img , (5,5) , 0)
 		# ret1 , imgThresh1 = cv2.threshold(imgBlur,150,255,cv2.THRESH_BINARY_INV)   # for detecting crossing
 		# cv2.imshow('Thresh 1',imgThresh1)
 		# edge = cv2.Canny( imgBlur , 100 , 255 )
-		otsuReturn , imgThresh2 = cv2.threshold ( edge , 0 , 255 , cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+		otsuReturn , imgThresh2 = cv2.threshold ( edge , 0 , 255 , cv2.THRESH_OTSU)
 		print otsuReturn
 		imgThresh2Copy = imgThresh2.copy()
 		cv2.imshow("edges detected", imgThresh2 )
-		edgesInContour , edgesHierarchy  = cv2.findContours ( imgThresh2 , cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE )
+		edgesInContour , edgesHierarchy  = cv2.findContours ( imgThresh2 , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE )
 		# cv2.drawContours ( imgCopy , edgesInContour , -1 , (255,0,0) , 2 )
 		# cv2.waitKey(0)
 		# mask = cv2.inRange ( imgCopy ,np.array ( [ 150,150,150 ] ),np.array ( [ 255,255,255 ] ) )
@@ -180,11 +166,11 @@ def main():
 
 					# cv2.drawContours(imgCopy,(cx1,cy1),2,(255,0,255),-1)
 				cv2.rectangle(imgCopy , (contourWithData.intRectX , contourWithData.intRectY) , (contourWithData.intRectX + contourWithData.intRectWidth , contourWithData.intRectY + contourWithData.intRectHeight ),( 255, 255, 0 ),2 )
-
+				crossingContour.append(contourWithData)
 			# cv2.drawContours(imgCopy,contourWithData.npaContour,-1,(255,255,0),2)
 			# c+=1
 			# print c
-			crossingContour.append(contourWithData)
+			
 
 		cv2.imshow("Contours After Edge Detection", imgCopy )
 
@@ -192,7 +178,29 @@ def main():
 
 		if (ch == 'y'):
 			print counter
+
+			i = 0
+
+			for Data in crossingContour:
+			    i+=1
+			    # cv2.rectangle (img , (Data.intRectX , Data.intRectY) , (Data.intRectX + Data.intRectWidth, Data.intRectY + Data.intRectHeight),(0, 255, 0),2)
+			    imgROI = img[Data.intRectY * resizingParameter : (Data.intRectY + Data.intRectHeight )*resizingParameter , Data.intRectX * resizingParameter : (Data.intRectX + Data.intRectWidth) * resizingParameter]
+			    # imgROIResized = cv2.resize(imgROI, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
+			    # npaROIResized = imgROIResized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+			    # npaROIResized = imgROIResized.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT))
+			    # cv2.namedWindow('Detected Contours'+str(i) , cv2.WINDOW_NORMAL)
+			    cv2.imshow('Detected Contours'+str(i) , imgROI)
+
+
+
+
+			    cv2.waitKey(0)
+
+
 			break
+
+		resizingParameter += increment
+		
 
 		# # x = crossingContour[0].intRectX + 2
 		# # y = crossingContour[0].intRectY + 2
