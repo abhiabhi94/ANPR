@@ -3,13 +3,14 @@ import operator
 import numpy as np
 
 MIN_CONTOUR_AREA = 200.0
-MAX_CONTOUR_AREA = 500.0
+MAX_CONTOUR_AREA = 800.0
 RESIZED_IMAGE_WIDTH = 28
 RESIZED_IMAGE_HEIGHT = 28
-PATH = 'testImages/sample9.jpg'
+PATH = 'testImages/car.jpg'
 
 class ContourWithData():
 
+	contourCharacters = None
 	foundContours = None           # contour
 	boundingRect = None         # bounding rect for contour
 	intRectX = 0                # bounding rect top left corner x location
@@ -28,10 +29,12 @@ class ContourWithData():
 
 
 	def checkIfContourIsValid(self):                            # contour selection
-		ratio = float( self.intRectWidth ) / self.intRectHeight
-		if ratio > 3  and ratio < 5 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA) : return True        # much better validity checking would be necessary
+		aspectRatioNumberPlate = float( self.intRectWidth ) / self.intRectHeight
+		if (aspectRatioNumberPlate > 2  and aspectRatioNumberPlate < 5 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA)) : return True        # much better validity checking would be necessary
 		return False 
 
+
+### Preprocessing ###
 
 def preprocessing(img):
 
@@ -43,7 +46,7 @@ def preprocessing(img):
 	imgThreshCopy = imgThresh.copy()
 	imgMorphed = cv2.morphologyEx(imgThresh, cv2.MORPH_OPEN, (5, 5))
 	edge = cv2.Canny (imgBlur, 100, 255 )
-	cv2.imshow("Number Plates detected", edge)
+	# cv2.imshow("Number Plates detected", edge)
 	return edge, imgGrayCopy, imgCopy
 
 
@@ -56,13 +59,18 @@ def main():
 
 	for counter in xrange(1, 20, 1):
 
+		### Resizing the Image and initializing the variables ###
+
 		allContoursWithData = []
 		validContoursWithData = []
-		platesContour = []
-		crossingContour = []
+		possiblePlateContour = []
+		sahiWaliNoPlate = []
+		# crossingContour = []
 		imgResized = cv2.resize(img, ( int(imgShape[1] / resizingParameter), int(imgShape[0] / resizingParameter)))
 		edge, imgGrayCopy, imgCopy = preprocessing (imgResized)
 		Contour, Hierarchy  = cv2.findContours ( edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE )
+
+		### Assigning Attributes to the object ###
 
 		for foundContours in Contour:
 
@@ -73,81 +81,94 @@ def main():
 			contourWithData.fltArea = cv2.contourArea( contourWithData.foundContours)           # calculate the contour area
 			allContoursWithData.append (contourWithData)
 
+	### Checking for possible contour of the number plate based upon the aspect ratio and area ###
+		
 		for contourWithData in allContoursWithData: 
 
-			[intX,intY,intWidth,intHeight] = contourWithData.boundingRect
-			ratio = float( intWidth ) / intHeight
-			meanVal = cv2.mean (imgCopy)
-
 			if (contourWithData.checkIfContourIsValid()):
-				print contourWithData.fltArea, ratio, meanVal[:3] 
-				cv2.rectangle(imgCopy, (contourWithData.intRectX, contourWithData.intRectY), (contourWithData.intRectX + contourWithData.intRectWidth, contourWithData.intRectY + contourWithData.intRectHeight ),( 255, 255, 0 ),2 )
-				platesContour.append(contourWithData)
+				possiblePlateContour.append(contourWithData)
 			
 
-		cv2.imshow("Contours After Edge Detection", imgCopy )
-		ch = chr(cv2.waitKey(0) & 255)
 
-		if (ch == 'y'):
-			print counter
+		i = 0
+### Checking for possible valid characters in Probable Number Plates ###
 
-			i = 0
+		for possiblyValidContour in possiblePlateContour:
+			i+=1
+			# cv2.rectangle (img, (Data.intRectX, Data.intRectY), (Data.intRectX + Data.intRectWidth, Data.intRectY + Data.intRectHeight),(0, 255, 0),2)
+			imgROI = img [possiblyValidContour.intRectY * resizingParameter : (possiblyValidContour.intRectY + possiblyValidContour.intRectHeight ) * resizingParameter, possiblyValidContour.intRectX * resizingParameter : (possiblyValidContour.intRectX + possiblyValidContour.intRectWidth) * resizingParameter]
+			# cv2.imshow('Possibly Valid Contours of the Number Plate'+str(i), imgROI)
+			# cv2.waitKey(0)
+			imgROICopy = imgROI.copy()
+			imgROIBlurred = cv2.medianBlur (imgROI, 1, 0)
+			imgROIGray = cv2.cvtColor (imgROIBlurred, cv2.COLOR_BGR2GRAY)
+			
+			threshPlate = cv2.adaptiveThreshold (imgROIGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,  11, 2)
+			contourInNumberPlate, contourHierarchy = cv2.findContours (threshPlate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-			for validPlatesContour in platesContour:
-				i+=1
-				contourCharacters=[]
-				# cv2.rectangle (img, (Data.intRectX, Data.intRectY), (Data.intRectX + Data.intRectWidth, Data.intRectY + Data.intRectHeight),(0, 255, 0),2)
-				imgROI = img [validPlatesContour.intRectY * resizingParameter : (validPlatesContour.intRectY + validPlatesContour.intRectHeight ) * resizingParameter, validPlatesContour.intRectX * resizingParameter : (validPlatesContour.intRectX + validPlatesContour.intRectWidth) * resizingParameter]
-				cv2.imshow('Detected Contours'+str(i), imgROI)
-				imgROICopy = imgROI.copy()
-				imgROIBlurred = cv2.medianBlur (imgROI, 1, 0)
-				imgROIGray = cv2.cvtColor (imgROIBlurred, cv2.COLOR_BGR2GRAY)
+			### Assigning attributes to the objects corresponding to every contours found and checking whether the possible contour is valid or not ###
+			
+			characters = []
+
+			for foundContours in contourInNumberPlate:
+
+				plateContourWithData = ContourWithData()                                             # instantiate a contour with data object
+				plateContourWithData.foundContours = foundContours                                         # assign contour to contour with data
+				plateContourWithData.fltArea = cv2.contourArea (plateContourWithData.foundContours)           # calculate the contour area
+				plateContourWithData.boundingRect = cv2.boundingRect (plateContourWithData.foundContours)     # get the bounding rect
+				plateContourWithData.calculateRectTopLeftPointAndWidthAndHeight ()                    # get bounding rect info
+				characterRatio = float (plateContourWithData.intRectWidth) / plateContourWithData.intRectHeight   # get aspect ratio
 				
-				threshPlate = cv2.adaptiveThreshold(imgROIGray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,  11, 2)
-				contourInNumberPlate, contourHierarchy = cv2.findContours (threshPlate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-				cv2.drawContours (imgROI , contourInNumberPlate, -1, (0, 0, 255), 2)
-				cv2.imshow ("Contour in Threshed Plated", threshPlate)
-				cv2.imshow ("Contours in Number Plate", imgROI)
+				if (plateContourWithData.fltArea > 10 and plateContourWithData.fltArea < 100 and characterRatio > 0.2 and characterRatio < 0.8):
+					characters.append (plateContourWithData)
 
+			if (len (characters) > 7 and len(characters) < 11):
+				cv2.rectangle(imgCopy, (possiblyValidContour.intRectX, possiblyValidContour.intRectY), (possiblyValidContour.intRectX + possiblyValidContour.intRectWidth, possiblyValidContour.intRectY + possiblyValidContour.intRectHeight ),( 0, 255, 0 ),2 )
+				possiblyValidContour.contourCharacters = characters
+				sahiWaliNoPlate.append (possiblyValidContour)
+
+		cv2.imshow("number plates detected", imgCopy )
+		cv2.waitKey(0)
+
+		noOfPlatesDetected = 0
+		sahiWaliNoPlate.sort( key = operator.attrgetter("intRectX"))
+		print "Total sahi wali plates detected:", len(sahiWaliNoPlate)
+
+		### Going through the Number Plates found ###
+		for noPlate in sahiWaliNoPlate:
+
+			imgROI = img [noPlate.intRectY * resizingParameter : (noPlate.intRectY + noPlate.intRectHeight ) * resizingParameter, noPlate.intRectX * resizingParameter : (noPlate.intRectX + noPlate.intRectWidth) * resizingParameter]
+			noOfPlatesDetected +=1
+			noPlate.contourCharacters.sort( key = operator.attrgetter("intRectX"))
+
+			characterCount = 0
+
+		### Character Segmentatio from the detected plate ###
+
+			for validCharacters in noPlate.contourCharacters:
+
+				characterCount += 1
+				characters = imgROI [validCharacters.intRectY : (validCharacters.intRectY + validCharacters.intRectHeight) , validCharacters.intRectX : (validCharacters.intRectX + validCharacters.intRectWidth) ]
+				cv2.imshow("Char"+str(characterCount)+".jpg", characters)
 				cv2.waitKey(0)
+					
+			print "Total characters detected in number plate:", characterCount
 
-				for foundContours in contourInNumberPlate:
-
-					plateContourWithData = ContourWithData()                                             # instantiate a contour with data object
-					plateContourWithData.foundContours = foundContours                                         # assign contour to contour with data
-					plateContourWithData.boundingRect = cv2.boundingRect (plateContourWithData.foundContours)     # get the bounding rect
-					plateContourWithData.calculateRectTopLeftPointAndWidthAndHeight ()                    # get bounding rect info
-					plateContourWithData.fltArea = cv2.contourArea (plateContourWithData.foundContours)           # calculate the contour area
-					contourCharacters.append (plateContourWithData)
-
-				contourCharacters.sort( key = operator.attrgetter("intRectX"))
-
-				c = 0
-
-				for validCharacters in contourCharacters:
-					characterRatio = float (validCharacters.intRectWidth) / validCharacters.intRectHeight
-
-					if (validCharacters.fltArea > 10 and validCharacters.fltArea < 100 and characterRatio > 0.25 and characterRatio < 0.75):
-						c += 1
-						cv2.rectangle(imgROICopy, (validCharacters.intRectX, validCharacters.intRectY), ((validCharacters.intRectX + validCharacters.intRectWidth), (validCharacters.intRectY + validCharacters.intRectHeight) ), (255,0,125),2)
-						character = imgROICopy [validCharacters.intRectY : validCharacters.intRectY + validCharacters.intRectHeight , validCharacters.intRectX : validCharacters.intRectX + validCharacters.intRectWidth ]
-						# cv2.namedWindow("Characters in Number Plate", cv2.WINDOW_NORMAL)
-						cv2.imshow("Characters in Number Plate", cv2.resize(character,(RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT)))
-						cv2.waitKey(0)
-						
-				print "Total characters detected in number plate:", c
-
-				cv2.waitKey(0)
+			cv2.waitKey(0)
 
 
 
 
 
 
-
+		
+		if (noOfPlatesDetected > 0):
+			print "No. of Number Plates Detected:",noOfPlatesDetected
 			break
 
-		resizingParameter += increment
+		else:
+
+			resizingParameter += increment
 
 
-main()
+main()                   
