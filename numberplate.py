@@ -143,17 +143,6 @@ def main():
 
 			characterCount = 0
 
-		### Character Segmentatio from the detected plate ###
-					if (validCharacters.fltArea > 10 and validCharacters.fltArea < 100 and characterRatio > 0.25 and characterRatio < 0.75):
-						c += 1
-						# cv2.rectangle(imgROICopy, (validCharacters.intRectX, validCharacters.intRectY), ((validCharacters.intRectX + validCharacters.intRectWidth), (validCharacters.intRectY + validCharacters.intRectHeight) ), (255,0,125),2)
-						character = imgROICopy [validCharacters.intRectY : validCharacters.intRectY + validCharacters.intRectHeight , validCharacters.intRectX : validCharacters.intRectX + validCharacters.intRectWidth ]
-						# cv2.namedWindow("Characters in Number Plate", cv2.WINDOW_NORMAL)
-						cv2.imwrite("ML/data/char_"+str(c)+".jpg", cv2.resize(character,(RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT)))
-						# cv2.waitKey(0)
-						
-				print "Total characters detected in number plate:", c
-
 			for validCharacters in noPlate.contourCharacters:
 
 				characterCount += 1
