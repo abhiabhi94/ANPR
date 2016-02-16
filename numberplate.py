@@ -2,11 +2,11 @@ import cv2
 import operator
 import numpy as np
 
-MIN_CONTOUR_AREA = 200.0
+MIN_CONTOUR_AREA = 100.0
 MAX_CONTOUR_AREA = 800.0
 RESIZED_IMAGE_WIDTH = 28
 RESIZED_IMAGE_HEIGHT = 28
-PATH = 'testImages/car.jpg'
+PATH = 'testImages/sample9.jpg'
 
 class ContourWithData():
 
@@ -30,7 +30,7 @@ class ContourWithData():
 
 	def checkIfContourIsValid(self):                            # contour selection
 		aspectRatioNumberPlate = float( self.intRectWidth ) / self.intRectHeight
-		if (aspectRatioNumberPlate > 2  and aspectRatioNumberPlate < 5 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA)) : return True        # much better validity checking would be necessary
+		if (aspectRatioNumberPlate > 1.5  and aspectRatioNumberPlate < 6 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA)) : return True        # much better validity checking would be necessary
 		return False 
 
 
@@ -119,7 +119,7 @@ def main():
 				plateContourWithData.calculateRectTopLeftPointAndWidthAndHeight ()                    # get bounding rect info
 				characterRatio = float (plateContourWithData.intRectWidth) / plateContourWithData.intRectHeight   # get aspect ratio
 				
-				if (plateContourWithData.fltArea > 10 and plateContourWithData.fltArea < 100 and characterRatio > 0.2 and characterRatio < 0.8):
+				if (plateContourWithData.fltArea > 10 and plateContourWithData.fltArea < 100 and characterRatio > 0.1 and characterRatio < 0.9):
 					characters.append (plateContourWithData)
 
 			if (len (characters) > 7 and len(characters) < 11):
@@ -154,12 +154,6 @@ def main():
 
 			cv2.waitKey(0)
 
-
-
-
-
-
-		
 		if (noOfPlatesDetected > 0):
 			print "No. of Number Plates Detected:",noOfPlatesDetected
 			break
