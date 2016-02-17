@@ -131,7 +131,7 @@ def main():
 		cv2.waitKey(0)
 
 		noOfPlatesDetected = 0
-		sahiWaliNoPlate.sort( key = operator.attrgetter("intRectX"))
+		sahiWaliNoPlate.sort ( key = operator.attrgetter("intRectX"))
 		print "Total sahi wali plates detected:", len(sahiWaliNoPlate)
 
 		### Going through the Number Plates found ###
