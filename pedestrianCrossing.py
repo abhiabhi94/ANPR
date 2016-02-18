@@ -37,7 +37,7 @@ class Contour :
 
 
 
-img = cv2.imread ("testImages/sample9.jpg")
+img = cv2.imread ("testImages/sample8.jpg")
 imgShape = img.shape [:2]
 resizingParameter = imgShape[1] / 1000.0 if (imgShape[1] > imgShape[0]) else imgShape[0] / 1000.0
 imgResized = cv2.resize(img, ( int(imgShape[1] / resizingParameter), int(imgShape[0] / resizingParameter)))
@@ -45,17 +45,16 @@ imgResizedCopy = imgResized.copy()
 imgGray = cv2.cvtColor (imgResized, cv2.COLOR_BGR2GRAY)
 imgBlurr = cv2.medianBlur (imgGray, 1, 0)
 imgMorph = cv2.morphologyEx (imgBlurr, cv2.MORPH_OPEN, (5,5))
-print imgMorph, imgMorph.shape
-# edge = cv2.Canny (imgMorph , 100, 255)
+# print imgMorph, imgMorph.shape
 radius = 30
 no_points = 8
 lbp = local_binary_pattern(imgMorph, no_points, radius, method = 'uniform')
-cv2.imshow("lbp", lbp)
-cv2.waitKey(0)
+# cv2.imshow("lbp", lbp)
+# cv2.waitKey(0)
 lbp = lbp.astype(np.uint8)
 thresh, lbpThresh = cv2.threshold (lbp, 1, 255, cv2.THRESH_BINARY_INV)
-print lbpThresh.shape
-cv2.imshow("fuckfuck", lbpThresh)
+# print lbpThresh.shape
+# cv2.imshow("fuckfuck", lbpThresh)
 cv2.waitKey(0)
 contours, hierarchy = cv2.findContours (lbpThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -67,7 +66,7 @@ for i in xrange(len(contours)-1):
 	# [RectX, RectY, RectWidth, RectHeight] = cv2.boundingRect(contours[i])
 	# aspectRatio = float(RectWidth) / RectHeight
 
-	if (contourObj.fltArea > 1000 and contourObj.fltArea < 2500 and  contourObj.aspectRatio > 1.5 and contourObj.aspectRatio < 4.0):
+	if (contourObj.fltArea > 500 and contourObj.fltArea < 3500 and  contourObj.aspectRatio > 1.5 and contourObj.aspectRatio < 6.5):
 
 		M = cv2.moments (contours[i])                  # moments
 
@@ -75,19 +74,19 @@ for i in xrange(len(contours)-1):
 		possiblePedestrianCrossingContour.append (contourObj)
 		yCentroid.append (contourObj.yCentroid)
 
-		print cv2.contourArea(contours[i]) , contourObj.aspectRatio, contourObj.yCentroid
+		# print cv2.contourArea(contours[i]) , contourObj.aspectRatio, contourObj.yCentroid
 
-		cv2.rectangle(imgResized, (contourObj.RectX, contourObj.RectY), (contourObj.RectX + contourObj.RectWidth , contourObj.RectY + contourObj.RectHeight), (255,255,0), 2)
+		# cv2.rectangle(imgResized, (contourObj.RectX, contourObj.RectY), (contourObj.RectX + contourObj.RectWidth , contourObj.RectY + contourObj.RectHeight), (255,255,0), 2)
 
-cv2.imshow ("Contours Found After LBP", imgResized)
-cv2.waitKey(0)
+# cv2.imshow ("Contours Found After LBP", imgResized)
+# cv2.waitKey(0)
 
 maxCentroid, minCentroid = max(yCentroid), min(yCentroid)
 
 # for x in xrange (imgShape[1], 20):
 crossingCount = 0
 
-for y in xrange (minCentroid, maxCentroid, 70):
+for y in xrange (minCentroid, maxCentroid, 50):
 
 	match = 0;
 	possibleCrossingContours = []
@@ -95,7 +94,7 @@ for y in xrange (minCentroid, maxCentroid, 70):
 	for centroid in possiblePedestrianCrossingContour :
 
 
-		if ( y - 50 <= centroid.yCentroid <= y + 50):
+		if ( y - 35 <= centroid.yCentroid <= y + 35):
 
 			match += 1
 			possibleCrossingContours.append(centroid)
@@ -106,18 +105,18 @@ for y in xrange (minCentroid, maxCentroid, 70):
 			crossingCountour = possibleCrossingContours
 
 
-print crossingCount, len (crossingCountour)
+# print crossingCount, len (crossingCountour)
 
-crossingCountour.sort (key = operator.attrgetter ("RectX"))
+crossingCountour.sort (key = operator.attrgetter ("RectY"))
 
 for contour in crossingCountour:
 
 	contour.getid()
 	cv2.rectangle(imgResizedCopy, (contour.RectX, contour.RectY),(contour.RectX + contour.RectWidth, contour.RectY + contour.RectHeight) , (255, 0,0), 2)
 
-cv2.rectangle(imgResizedCopy, (crossingCountour[0].RectY, crossingCountour[0].RectY), (crossingCountour[-1].RectX + crossingCountour[-1].RectWidth, crossingCountour[-1].RectY + crossingCountour[-1].RectHeight), (0,255,0), 2)
+# cv2.rectangle(imgResizedCopy, (crossingCountour[0].RectX, crossingCountour[0].RectY), (crossingCountour[-1].RectX + crossingCountour[-1].RectWidth, crossingCountour[-1].RectY + crossingCountour[-1].RectHeight), (0,255,0), 2)
 
-
+cv2.line (imgResizedCopy, (0,crossingCountour[0].RectY), (imgShape[1], crossingCountour[0].RectY), (0,0,255), 2)
 cv2.imshow("Crossings Detected", imgResizedCopy)
 cv2.waitKey(0)
 
