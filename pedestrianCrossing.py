@@ -37,7 +37,7 @@ class Contour :
 
 
 
-img = cv2.imread ("testImages/sample8.jpg")
+img = cv2.imread ("testImages/sample9.jpg")
 imgShape = img.shape [:2]
 resizingParameter = imgShape[1] / 1000.0 if (imgShape[1] > imgShape[0]) else imgShape[0] / 1000.0
 imgResized = cv2.resize(img, ( int(imgShape[1] / resizingParameter), int(imgShape[0] / resizingParameter)))
@@ -86,7 +86,7 @@ maxCentroid, minCentroid = max(yCentroid), min(yCentroid)
 # for x in xrange (imgShape[1], 20):
 crossingCount = 0
 
-for y in xrange (minCentroid, maxCentroid, 50):
+for y in xrange (minCentroid, maxCentroid, 10):
 
 	match = 0;
 	possibleCrossingContours = []
@@ -94,7 +94,7 @@ for y in xrange (minCentroid, maxCentroid, 50):
 	for centroid in possiblePedestrianCrossingContour :
 
 
-		if ( y - 35 <= centroid.yCentroid <= y + 35):
+		if ( y - 25 <= centroid.yCentroid <= y + 25):
 
 			match += 1
 			possibleCrossingContours.append(centroid)
@@ -109,14 +109,22 @@ for y in xrange (minCentroid, maxCentroid, 50):
 
 crossingCountour.sort (key = operator.attrgetter ("RectY"))
 
+xx = []
+yy = []
+
 for contour in crossingCountour:
 
 	contour.getid()
-	cv2.rectangle(imgResizedCopy, (contour.RectX, contour.RectY),(contour.RectX + contour.RectWidth, contour.RectY + contour.RectHeight) , (255, 0,0), 2)
+	# cv2.rectangle(imgResizedCopy, (contour.RectX, contour.RectY),(contour.RectX + contour.RectWidth, contour.RectY + contour.RectHeight) , (255, 0,0), 2)
+	xx.append(contour.RectX)
+	yy.append(contour.RectY)
+
 
 # cv2.rectangle(imgResizedCopy, (crossingCountour[0].RectX, crossingCountour[0].RectY), (crossingCountour[-1].RectX + crossingCountour[-1].RectWidth, crossingCountour[-1].RectY + crossingCountour[-1].RectHeight), (0,255,0), 2)
 
-cv2.line (imgResizedCopy, (0,crossingCountour[0].RectY), (imgShape[1], crossingCountour[0].RectY), (0,0,255), 2)
+zz = np.polyfit(xx,yy,1)
+# cv2.line (imgResizedCopy, (0,crossingCountour[0].RectY), (imgShape[1], crossingCountour[0].RectY), (0,0,255), 2)
+cv2.line (imgResizedCopy, (0,int(zz[0] + zz[1])), (imgShape[1], int(zz[0]*imgShape[1] + zz[1])), (0,0,255), 2)
 cv2.imshow("Crossings Detected", imgResizedCopy)
 cv2.waitKey(0)
 
