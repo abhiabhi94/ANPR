@@ -6,18 +6,22 @@ MIN_CONTOUR_AREA = 100.0
 MAX_CONTOUR_AREA = 800.0
 RESIZED_IMAGE_WIDTH = 28
 RESIZED_IMAGE_HEIGHT = 28
-PATH = 'testImages/sample9.jpg'
+PATH = 'testImages/car.jpg'
+
 
 class ContourWithData():
 
-	contourCharacters = None
-	foundContours = None           # contour
-	boundingRect = None         # bounding rect for contour
-	intRectX = 0                # bounding rect top left corner x location
-	intRectY = 0                # bounding rect top left corner y location
-	intRectWidth = 0            # bounding rect width
-	intRectHeight = 0           # bounding rect height
-	fltArea = 0.0               # area of contour
+	def __init__(self):
+
+		self.contourCharacters = None
+		self.foundContours = None           # contour
+		self.boundingRect = None         # bounding rect for contour
+		self.intRectX = 0                # bounding rect top left corner x location
+		self.intRectY = 0                # bounding rect top left corner y location
+		self.intRectWidth = 0            # bounding rect width
+		self.intRectHeight = 0           # bounding rect height
+		self.fltArea = 0.0               # area of contour
+		self.id = False
 
 	def calculateRectTopLeftPointAndWidthAndHeight(self):               # calculate bounding rect info
 		
@@ -33,15 +37,18 @@ class ContourWithData():
 		if (aspectRatioNumberPlate > 1.5  and aspectRatioNumberPlate < 6 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA)) : return True        # much better validity checking would be necessary
 		return False 
 
+	def getID(self):
+		self.id = True
+
 
 ### Preprocessing ###
 
 def preprocessing(img):
 
-	imgCopy=img.copy()
-	img=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	imgGrayCopy=img.copy()
-	imgBlur = cv2.medianBlur(img, 1, 0)
+	imgCopy = img.copy()
+	imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	imgGrayCopy = imgGray.copy()
+	imgBlur = cv2.medianBlur(imgGray, 1, 0)
 	otsuReturn, imgThresh = cv2.threshold ( imgBlur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 	imgThreshCopy = imgThresh.copy()
 	imgMorphed = cv2.morphologyEx(imgThresh, cv2.MORPH_OPEN, (5, 5))
@@ -49,6 +56,51 @@ def preprocessing(img):
 	# cv2.imshow("Number Plates detected", edge)
 	return edge, imgGrayCopy, imgCopy
 
+
+
+def numberPlateCategorization(sumBGR , characterCount):
+
+	sumBGR = sumBGR / characterCount
+	if(sumBGR[0] > 127 and sumBGR[1] > 127 and sumBGR[2] > 127):
+		print "white"
+	elif(sumBGR[0] <= 127 and sumBGR[1] <= 127 and sumBGR[2] <= 127):
+		print "black"
+	elif(sumBGR[0] > 127 and sumBGR[1] <= 127 and sumBGR[2] <= 127):
+		print "blue"
+	elif(sumBGR[0] <= 127 and sumBGR[1] <= 127 and sumBGR[2] > 127):
+		print "red"
+	else:
+		print "yellow"
+	# print image, image.shape, x, y
+	# print "pixel value:",image[y-5][x]
+	# for i in range(3):
+	# 	sumBGR[i] = sumBGR[i] + image[y-5][x][i]
+	# numberPlateBlurred = cv2.medianBlur (character, 1, 0)
+	# M = cv2.moments(character)
+	# cx = M['m']
+
+	# threshValue, numberPlateThreshed = cv2.threshold (numberPlateBlurred, 120, 255, cv2.THRESH_BINARY)
+	# colorsCount ={}
+	# (R, G, B) = cv2.split(numberPlateBlurred)
+	# R = R.flatten()
+	# G = G.flatten()
+	# B = B.flatten()
+
+	# for i in xrange (len(R)):
+
+	# 	RGB = str(R[i]) + str(G[i]) + str(B[i])
+
+	# 	if (RGB in colorsCount):
+	# 		colorsCount[RGB] +=1
+
+	# 	else:
+	# 		colorsCount[RGB] = 1
+
+	# print colorsCount
+	# cv2.imshow("fuck", numberPlateThreshed)
+
+
+	# cv2.waitKey(0)
 
 def main():
 
@@ -67,6 +119,7 @@ def main():
 		sahiWaliNoPlate = []
 		# crossingContour = []
 		imgResized = cv2.resize(img, ( int(imgShape[1] / resizingParameter), int(imgShape[0] / resizingParameter)))
+		imgResizedCopy = imgResized.copy()
 		edge, imgGrayCopy, imgCopy = preprocessing (imgResized)
 		Contour, Hierarchy  = cv2.findContours ( edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE )
 
@@ -122,9 +175,10 @@ def main():
 				if (plateContourWithData.fltArea > 10 and plateContourWithData.fltArea < 100 and characterRatio > 0.1 and characterRatio < 0.9):
 					characters.append (plateContourWithData)
 
-			if (len (characters) > 7 and len(characters) < 11):
+			if (len(characters) > 7 and len(characters) < 11):
 				cv2.rectangle(imgCopy, (possiblyValidContour.intRectX, possiblyValidContour.intRectY), (possiblyValidContour.intRectX + possiblyValidContour.intRectWidth, possiblyValidContour.intRectY + possiblyValidContour.intRectHeight ),( 0, 255, 0 ),2 )
 				possiblyValidContour.contourCharacters = characters
+				possiblyValidContour.getID()
 				sahiWaliNoPlate.append (possiblyValidContour)
 
 		cv2.imshow("number plates detected", imgCopy )
@@ -138,20 +192,29 @@ def main():
 		for noPlate in sahiWaliNoPlate:
 
 			imgROI = img [noPlate.intRectY * resizingParameter : (noPlate.intRectY + noPlate.intRectHeight ) * resizingParameter, noPlate.intRectX * resizingParameter : (noPlate.intRectX + noPlate.intRectWidth) * resizingParameter]
+			
+			
 			noOfPlatesDetected +=1
 			noPlate.contourCharacters.sort( key = operator.attrgetter("intRectX"))
 
 			characterCount = 0
+			sumBGR = np.zeros(3)
 
 			for validCharacters in noPlate.contourCharacters:
 
 				characterCount += 1
 				characters = imgROI [validCharacters.intRectY : (validCharacters.intRectY + validCharacters.intRectHeight) , validCharacters.intRectX : (validCharacters.intRectX + validCharacters.intRectWidth) ]
+				
+				for i in range(3):
+
+					sumBGR[i] = sumBGR[i] + imgROI[validCharacters.intRectY-1][validCharacters.intRectX-1][i]
+
 				cv2.imshow("Char"+str(characterCount)+".jpg", characters)
 				cv2.waitKey(0)
 					
 			print "Total characters detected in number plate:", characterCount
-
+			print "avg: ",sumBGR/characterCount
+			numberPlateCategorization (sumBGR,characterCount)
 			cv2.waitKey(0)
 
 		if (noOfPlatesDetected > 0):
