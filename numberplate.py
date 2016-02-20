@@ -6,7 +6,9 @@ MIN_CONTOUR_AREA = 100.0
 MAX_CONTOUR_AREA = 800.0
 RESIZED_IMAGE_WIDTH = 28
 RESIZED_IMAGE_HEIGHT = 28
-PATH = 'testImages/car.jpg'
+PATH = 'testImages/sample9.jpg'
+FILE = "/tmp/numberPlateInfo.npy"
+numberPlateCoordinates = []
 
 
 class ContourWithData():
@@ -55,6 +57,11 @@ def preprocessing(img):
 	edge = cv2.Canny (imgBlur, 100, 255 )
 	# cv2.imshow("Number Plates detected", edge)
 	return edge, imgGrayCopy, imgCopy
+
+def writeToFile(resizingParameter):
+
+	numberPlateCoordinates.append(resizingParameter)
+	np.save(FILE, numberPlateCoordinates)
 
 
 
@@ -192,7 +199,7 @@ def main():
 		for noPlate in sahiWaliNoPlate:
 
 			imgROI = img [noPlate.intRectY * resizingParameter : (noPlate.intRectY + noPlate.intRectHeight ) * resizingParameter, noPlate.intRectX * resizingParameter : (noPlate.intRectX + noPlate.intRectWidth) * resizingParameter]
-			
+			numberPlateCoordinates.append([int(noPlate.intRectX * resizingParameter)  , int(noPlate.intRectY* resizingParameter) , int(noPlate.intRectHeight* resizingParameter) , int(noPlate.intRectWidth* resizingParameter) ])
 			
 			noOfPlatesDetected +=1
 			noPlate.contourCharacters.sort( key = operator.attrgetter("intRectX"))
@@ -224,6 +231,5 @@ def main():
 		else:
 
 			resizingParameter += increment
-
-
+	writeToFile(resizingParameter)
 main()                   

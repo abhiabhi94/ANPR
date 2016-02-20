@@ -6,6 +6,7 @@ import operator
 possiblePedestrianCrossingContour = []
 yCentroid = []
 crossingCountour =[]
+FILE = "/tmp/numberPlateInfo.npy"
 
 class Contour :
 
@@ -35,7 +36,22 @@ class Contour :
 		self.id = True
 
 
+def readFromFile(img,resizingParameter):
 
+	readInfo = np.load(FILE )
+
+	numberPlateCoordinates = readInfo[:len(readInfo) - 1]
+	resizingParameterNP = readInfo[len(readInfo)-1]
+	print numberPlateCoordinates
+	# isCrossingPedestrian(numberPlateCoordinates,resizingParameter)
+	isCrossingPedestrian(img,numberPlateCoordinates,resizingParameterNP,resizingParameter)
+
+def isCrossingPedestrian(img,numberPlateCoordinates,resizingParameterNP,resizingParameter):
+	# print 1
+
+	# print type(numberPlateCoordinates)
+	for i in range(len(numberPlateCoordinates)):
+		cv2.rectangle(img, (int(numberPlateCoordinates[i][0]/resizingParameterNP), int(numberPlateCoordinates[i][1]/resizingParameter)), (int((numberPlateCoordinates[i][0] + numberPlateCoordinates[i][3])/resizingParameter), int((numberPlateCoordinates[i][1] + numberPlateCoordinates[i][2] )/resizingParameter)),( 0, 255, 0 ),2 )
 
 img = cv2.imread ("testImages/sample9.jpg")
 imgShape = img.shape [:2]
@@ -125,6 +141,7 @@ for contour in crossingCountour:
 zz = np.polyfit(xx,yy,1)
 # cv2.line (imgResizedCopy, (0,crossingCountour[0].RectY), (imgShape[1], crossingCountour[0].RectY), (0,0,255), 2)
 cv2.line (imgResizedCopy, (0,int(zz[0] + zz[1])), (imgShape[1], int(zz[0]*imgShape[1] + zz[1])), (0,0,255), 2)
+readFromFile(imgResizedCopy,resizingParameter)
 cv2.imshow("Crossings Detected", imgResizedCopy)
 cv2.waitKey(0)
 
