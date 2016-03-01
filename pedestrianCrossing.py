@@ -6,7 +6,10 @@ import operator
 possiblePedestrianCrossingContour = []
 yCentroid = []
 crossingCountour =[]
+addH = 40
+subY = 100
 FILE = "/tmp/numberPlateInfo.npy"
+PATH = 'testImages/sample9.jpg'
 
 class Contour :
 
@@ -36,24 +39,35 @@ class Contour :
 		self.id = True
 
 
-def readFromFile(img,resizingParameter):
+def readFromFile(img,resizingParameter,zz):
 
 	readInfo = np.load(FILE )
 
 	numberPlateCoordinates = readInfo[:len(readInfo) - 1]
 	resizingParameterNP = readInfo[len(readInfo)-1]
-	print numberPlateCoordinates
+	# print numberPlateCoordinates
 	# isCrossingPedestrian(numberPlateCoordinates,resizingParameter)
-	isCrossingPedestrian(img,numberPlateCoordinates,resizingParameterNP,resizingParameter)
+	trueFalse = isCrossingPedestrian(img,numberPlateCoordinates,resizingParameterNP,resizingParameter,zz)
+	for i in range(len(trueFalse)):
+		if(trueFalse[i]):
+			print "vehicle "+str(i+1)+" from left is defaulter"
+		else:
+			print "vehicle "+str(i+1)+" from left is not a defaulter"
 
-def isCrossingPedestrian(img,numberPlateCoordinates,resizingParameterNP,resizingParameter):
+def isCrossingPedestrian(img,numberPlateCoordinates,resizingParameterNP,resizingParameter,zz):
 	# print 1
+	trueFalse = []
 
-	# print type(numberPlateCoordinates)
+	# print len(numberPlateCoordinates)
 	for i in range(len(numberPlateCoordinates)):
-		cv2.rectangle(img, (int(numberPlateCoordinates[i][0]/resizingParameterNP), int(numberPlateCoordinates[i][1]/resizingParameter)), (int((numberPlateCoordinates[i][0] + numberPlateCoordinates[i][3])/resizingParameter), int((numberPlateCoordinates[i][1] + numberPlateCoordinates[i][2] )/resizingParameter)),( 0, 255, 0 ),2 )
+		# rectNP = cv2.rectangle(img, (int(numberPlateCoordinates[i][0]/resizingParameter), int(numberPlateCoordinates[i][1]/resizingParameter)-subY), (int((numberPlateCoordinates[i][0] + numberPlateCoordinates[i][3])/resizingParameter), int((numberPlateCoordinates[i][1] + numberPlateCoordinates[i][2] )/resizingParameter)+addH),( 0, 255, 0 ),2 )
+		# rectNP = cv2.rectangle(img, (0,0), (imgShape[1], imgShape[0]), (255,0,255), 2)
+		# print cv2.clipLine(rectNP, (0,int(zz[1])), (img.shape[1], int(zz[0]*img.shape[1] + zz[1])))
+		# return cv2.clipLine(rectNP, (4,5), (8000,9000))[0]
+		trueFalse.append(cv2.clipLine((int(numberPlateCoordinates[i][0]/resizingParameter) - subY,int(numberPlateCoordinates[i][1]/resizingParameter), int((numberPlateCoordinates[i][3])/resizingParameter), int((numberPlateCoordinates[i][2])/resizingParameter) + addH), (0,int(zz[1])), (img.shape[1], int(zz[0]*img.shape[1] + zz[1])))[0])
+	return trueFalse
 
-img = cv2.imread ("testImages/sample9.jpg")
+img = cv2.imread (PATH)
 imgShape = img.shape [:2]
 resizingParameter = imgShape[1] / 1000.0 if (imgShape[1] > imgShape[0]) else imgShape[0] / 1000.0
 imgResized = cv2.resize(img, ( int(imgShape[1] / resizingParameter), int(imgShape[0] / resizingParameter)))
@@ -82,7 +96,7 @@ for i in xrange(len(contours)-1):
 	# [RectX, RectY, RectWidth, RectHeight] = cv2.boundingRect(contours[i])
 	# aspectRatio = float(RectWidth) / RectHeight
 
-	if (contourObj.fltArea > 500 and contourObj.fltArea < 3500 and  contourObj.aspectRatio > 1.5 and contourObj.aspectRatio < 6.5):
+	if (contourObj.fltArea > 500 and contourObj.fltArea < 7500 and  contourObj.aspectRatio > 3.7 and contourObj.aspectRatio < 50.5):
 
 		M = cv2.moments (contours[i])                  # moments
 
@@ -140,20 +154,10 @@ for contour in crossingCountour:
 
 zz = np.polyfit(xx,yy,1)
 # cv2.line (imgResizedCopy, (0,crossingCountour[0].RectY), (imgShape[1], crossingCountour[0].RectY), (0,0,255), 2)
-cv2.line (imgResizedCopy, (0,int(zz[0] + zz[1])), (imgShape[1], int(zz[0]*imgShape[1] + zz[1])), (0,0,255), 2)
-readFromFile(imgResizedCopy,resizingParameter)
+cv2.line (imgResizedCopy, (0,int( zz[1])), (imgResizedCopy.shape[1], int(zz[0]*imgResizedCopy.shape[1] + zz[1])), (0,0,255), 2)
+# print int(zz[0] + zz[1]), (imgShape[1], int(zz[0]*imgShape[1] + zz[1]))
+# print igmResizedCopy.shape
+readFromFile(imgResizedCopy,resizingParameter,zz)
 cv2.imshow("Crossings Detected", imgResizedCopy)
 cv2.waitKey(0)
 
-
-
-
-
-
-
-
-
-
-
-
-		

@@ -4,8 +4,14 @@ import numpy as np
 
 MIN_CONTOUR_AREA = 100.0
 MAX_CONTOUR_AREA = 800.0
-RESIZED_IMAGE_WIDTH = 28
-RESIZED_IMAGE_HEIGHT = 28
+RESIZED_IMAGE_WIDTH = 20
+RESIZED_IMAGE_HEIGHT = 20
+MIN_CHARACTER_AREA = 10
+MAX_CHARACTER_AREA = 150
+MIN_ASPECTRATIO = 2.5
+MAX_ASPECTRATIO = 7
+MIN_ASPECTRATIO_CHAR = 0.1
+MAX_ASPECTRATIO_CHAR = 0.9
 PATH = 'testImages/sample9.jpg'
 FILE = "/tmp/numberPlateInfo.npy"
 numberPlateCoordinates = []
@@ -36,7 +42,9 @@ class ContourWithData():
 
 	def checkIfContourIsValid(self):                            # contour selection
 		aspectRatioNumberPlate = float( self.intRectWidth ) / self.intRectHeight
-		if (aspectRatioNumberPlate > 1.5  and aspectRatioNumberPlate < 6 and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA)) : return True        # much better validity checking would be necessary
+		if (aspectRatioNumberPlate > MIN_ASPECTRATIO  and aspectRatioNumberPlate < MAX_ASPECTRATIO and (self.fltArea > MIN_CONTOUR_AREA and self.fltArea < MAX_CONTOUR_AREA)) : 
+			# print aspectRatioNumberPlate
+			return True        # much better validity checking would be necessary
 		return False 
 
 	def getID(self):
@@ -48,14 +56,15 @@ class ContourWithData():
 def preprocessing(img):
 
 	imgCopy = img.copy()
+
 	imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	imgGrayCopy = imgGray.copy()
-	imgBlur = cv2.medianBlur(imgGray, 1, 0)
+	imgBlur = cv2.medianBlur(imgGray, 3, 0)
 	otsuReturn, imgThresh = cv2.threshold ( imgBlur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 	imgThreshCopy = imgThresh.copy()
 	imgMorphed = cv2.morphologyEx(imgThresh, cv2.MORPH_OPEN, (5, 5))
 	edge = cv2.Canny (imgBlur, 100, 255 )
-	# cv2.imshow("Number Plates detected", edge)
+	cv2.imshow("Number Plates detected", edge)
 	return edge, imgGrayCopy, imgCopy
 
 def writeToFile(resizingParameter):
@@ -68,16 +77,27 @@ def writeToFile(resizingParameter):
 def numberPlateCategorization(sumBGR , characterCount):
 
 	sumBGR = sumBGR / characterCount
+
 	if(sumBGR[0] > 127 and sumBGR[1] > 127 and sumBGR[2] > 127):
-		print "white"
+
+		print "white : Personal Vehichle"
+
 	elif(sumBGR[0] <= 127 and sumBGR[1] <= 127 and sumBGR[2] <= 127):
-		print "black"
+
+		print "black : Commercial Vehichle"
+
 	elif(sumBGR[0] > 127 and sumBGR[1] <= 127 and sumBGR[2] <= 127):
-		print "blue"
+
+		print "blue: Foreign Vehichle"
+
 	elif(sumBGR[0] <= 127 and sumBGR[1] <= 127 and sumBGR[2] > 127):
-		print "red"
+
+		print "red : Official Car of Governers or President "
+
 	else:
-		print "yellow"
+
+		print "yellow : Taxi"
+
 	# print image, image.shape, x, y
 	# print "pixel value:",image[y-5][x]
 	# for i in range(3):
@@ -109,6 +129,130 @@ def numberPlateCategorization(sumBGR , characterCount):
 
 	# cv2.waitKey(0)
 
+def states(a):
+
+	if(a[0] == 'A' and a[1] == 'N'):
+
+		print "Andaman and Nicobar"
+
+	elif(a[0] == 'A' and a[1] == 'P'):
+
+		print "Andhra Pradesh"
+
+	elif(a[0] == 'A' and a[1] == 'R'):
+
+		print "Arunachal Pradesh"
+
+	elif(a[0] == 'A' and a[1] == 'S'):
+
+		print "Assam"
+
+	elif(a[0] == 'B' and a[1] == 'R'):
+
+		print "Bihar"
+
+	elif(a[0] == 'C' and a[1] == 'G'):
+
+		print "Chattisgarh"
+
+	elif(a[0] == 'C' and a[1] == 'H'):
+
+		print "Chandigarh"
+
+	elif(a[0] == 'R' and a[1] == 'J'):
+
+		print "Rajasthan"
+
+	elif(a[0] == 'G' and a[1] == 'J'):
+
+		print "Gujarat"
+
+	elif(a[0] == 'P' and a[1] == 'B'):
+
+		print "Punjab"
+
+	elif(a[0] == 'H' and a[1] == 'R'):
+
+		print "Haryana"
+	
+	elif(a[0] == 'H' and a[1] == 'P'):
+		
+		print "Himachal Pradesh"
+	
+	elif(a[0] == 'T' and a[1] == 'R'):
+		
+		print "Tripura"
+	
+	elif(a[0] == 'W' and a[1] == 'B'):
+		
+		print "West Bengal"
+	
+	elif(a[0] == 'J' and a[1] == 'K'):
+		
+		print "Jammu and Kashmir"
+	
+	elif(a[0] == 'Q' and a[1] == 'Q'):
+		
+		print "Daman and Diu"
+	
+	elif(a[0] == 'U' and a[1] == 'K'):
+		
+		print "Uttrakhand"
+	
+	elif(a[0] == 'K' and a[1] == 'A'):
+		
+		print "Karnataka"
+	
+	elif(a[0] == 'L' and a[1] == 'Q'):
+		
+		print "Lakshwadeep"
+	
+	elif(a[0] == 'D' and a[1] == 'L'):
+		
+		print "Delhi"
+	
+	else:
+		
+		print "Not a State vehicle"
+
+	if(a[2]%2):
+		
+		print "Odd , Fine = 2000"
+	
+	else:
+		
+		print "Even"
+
+
+def OCR (img , position):
+
+	if ( position == 1 or position == 2):
+
+		npaClassifications = np.loadtxt ("classification_alphabets.txt", np.float32)
+		npaFlattenedImages = np.loadtxt ("flattened_alphabets.txt", np.float32)
+
+	else:
+		npaClassifications = np.loadtxt("classification_numbers.txt", np.float32)
+		npaFlattenedImages = np.loadtxt("flattened_numbers.txt", np.float32)
+	# print npaClassifications.shape, npaFlattenedImages.shape
+	npaClassifications = npaClassifications.reshape((npaClassifications.size, 1))
+	kNearest = cv2.KNearest()
+	kNearest.train (npaFlattenedImages, npaClassifications)
+	imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	imgBlurred = cv2.medianBlur(imgGray, 1, 0)
+	imgThresh = cv2.adaptiveThreshold(imgBlurred,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,11,2)
+	imgThresh = cv2.resize (imgThresh, (RESIZED_IMAGE_WIDTH, RESIZED_IMAGE_HEIGHT))
+	# print imgThresh.shape
+	npaROIResized = np.float32(imgThresh.reshape((1, RESIZED_IMAGE_WIDTH * RESIZED_IMAGE_HEIGHT )))
+	# print npaROIResized.shape
+	retval, npaResults, neigh_resp, dists = kNearest.find_nearest(npaROIResized, k = 1)
+	
+	if (retval >= 65):
+		return chr(int(retval))
+
+	else:
+		return int(retval)
+
 def main():
 
 	img = cv2.imread(PATH)
@@ -116,7 +260,7 @@ def main():
 	resizingParameter = imgShape[1] / 1000.0 if (imgShape[1] > imgShape[0]) else imgShape[0] / 1000.0
 	increment = 0.2
 
-	for counter in xrange(1, 20, 1):
+	for counter in xrange(1, 20):
 
 		### Resizing the Image and initializing the variables ###
 
@@ -154,6 +298,7 @@ def main():
 ### Checking for possible valid characters in Probable Number Plates ###
 
 		for possiblyValidContour in possiblePlateContour:
+			
 			i+=1
 			# cv2.rectangle (img, (Data.intRectX, Data.intRectY), (Data.intRectX + Data.intRectWidth, Data.intRectY + Data.intRectHeight),(0, 255, 0),2)
 			imgROI = img [possiblyValidContour.intRectY * resizingParameter : (possiblyValidContour.intRectY + possiblyValidContour.intRectHeight ) * resizingParameter, possiblyValidContour.intRectX * resizingParameter : (possiblyValidContour.intRectX + possiblyValidContour.intRectWidth) * resizingParameter]
@@ -179,10 +324,12 @@ def main():
 				plateContourWithData.calculateRectTopLeftPointAndWidthAndHeight ()                    # get bounding rect info
 				characterRatio = float (plateContourWithData.intRectWidth) / plateContourWithData.intRectHeight   # get aspect ratio
 				
-				if (plateContourWithData.fltArea > 10 and plateContourWithData.fltArea < 100 and characterRatio > 0.1 and characterRatio < 0.9):
+				if (plateContourWithData.fltArea > MIN_CHARACTER_AREA and plateContourWithData.fltArea < MAX_CHARACTER_AREA and characterRatio > MIN_ASPECTRATIO_CHAR and characterRatio < MAX_ASPECTRATIO_CHAR):
+					
 					characters.append (plateContourWithData)
 
-			if (len(characters) > 7 and len(characters) < 11):
+			if (len(characters) >= 5 and len(characters) < 11):
+
 				cv2.rectangle(imgCopy, (possiblyValidContour.intRectX, possiblyValidContour.intRectY), (possiblyValidContour.intRectX + possiblyValidContour.intRectWidth, possiblyValidContour.intRectY + possiblyValidContour.intRectHeight ),( 0, 255, 0 ),2 )
 				possiblyValidContour.contourCharacters = characters
 				possiblyValidContour.getID()
@@ -193,7 +340,7 @@ def main():
 
 		noOfPlatesDetected = 0
 		sahiWaliNoPlate.sort ( key = operator.attrgetter("intRectX"))
-		print "Total sahi wali plates detected:", len(sahiWaliNoPlate)
+		print "Total plates detected:", len(sahiWaliNoPlate)
 
 		### Going through the Number Plates found ###
 		for noPlate in sahiWaliNoPlate:
@@ -206,30 +353,43 @@ def main():
 
 			characterCount = 0
 			sumBGR = np.zeros(3)
+			NP = []
 
 			for validCharacters in noPlate.contourCharacters:
 
 				characterCount += 1
 				characters = imgROI [validCharacters.intRectY : (validCharacters.intRectY + validCharacters.intRectHeight) , validCharacters.intRectX : (validCharacters.intRectX + validCharacters.intRectWidth) ]
+				cv2.imshow("character", characters)
+				cv2.waitKey(0)
 				
+				if(characterCount == 1 or characterCount == 2 ):
+
+					NP.append(OCR(characters, characterCount)) 
+					# print NP
+
 				for i in range(3):
 
 					sumBGR[i] = sumBGR[i] + imgROI[validCharacters.intRectY-1][validCharacters.intRectX-1][i]
 
-				cv2.imshow("Char"+str(characterCount)+".jpg", characters)
-				cv2.waitKey(0)
+			NP.append(OCR(characters, characterCount)) 
+			states(NP)
+
+				# cv2.imwrite("Char"+str(characterCount)+".jpg", characters)
+				# cv2.waitKey(0)
 					
 			print "Total characters detected in number plate:", characterCount
 			print "avg: ",sumBGR/characterCount
 			numberPlateCategorization (sumBGR,characterCount)
 			cv2.waitKey(0)
 
-		if (noOfPlatesDetected > 0):
-			print "No. of Number Plates Detected:",noOfPlatesDetected
+		if (len(sahiWaliNoPlate) > 0):
+
 			break
 
 		else:
 
 			resizingParameter += increment
+	
 	writeToFile(resizingParameter)
+
 main()                   
