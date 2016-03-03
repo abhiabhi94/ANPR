@@ -9,7 +9,7 @@ crossingCountour =[]
 addH = 40
 subY = 100
 FILE = "/tmp/numberPlateInfo.npy"
-PATH = 'testImages/sample9.jpg'
+PATH = 'testImages/sample14.jpg'
 
 class Contour :
 
@@ -73,19 +73,19 @@ resizingParameter = imgShape[1] / 1000.0 if (imgShape[1] > imgShape[0]) else img
 imgResized = cv2.resize(img, ( int(imgShape[1] / resizingParameter), int(imgShape[0] / resizingParameter)))
 imgResizedCopy = imgResized.copy()
 imgGray = cv2.cvtColor (imgResized, cv2.COLOR_BGR2GRAY)
-imgBlurr = cv2.medianBlur (imgGray, 1, 0)
+imgBlurr = cv2.medianBlur (imgGray, 3, 0)
 imgMorph = cv2.morphologyEx (imgBlurr, cv2.MORPH_OPEN, (5,5))
 # print imgMorph, imgMorph.shape
 radius = 30
 no_points = 8
 lbp = local_binary_pattern(imgMorph, no_points, radius, method = 'uniform')
-# cv2.imshow("lbp", lbp)
-# cv2.waitKey(0)
+cv2.imshow("lbp", lbp)
+cv2.waitKey(0)
 lbp = lbp.astype(np.uint8)
 thresh, lbpThresh = cv2.threshold (lbp, 1, 255, cv2.THRESH_BINARY_INV)
 # print lbpThresh.shape
 # cv2.imshow("fuckfuck", lbpThresh)
-cv2.waitKey(0)
+# cv2.waitKey(0)
 contours, hierarchy = cv2.findContours (lbpThresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 for i in xrange(len(contours)-1):
@@ -96,7 +96,7 @@ for i in xrange(len(contours)-1):
 	# [RectX, RectY, RectWidth, RectHeight] = cv2.boundingRect(contours[i])
 	# aspectRatio = float(RectWidth) / RectHeight
 
-	if (contourObj.fltArea > 500 and contourObj.fltArea < 7500 and  contourObj.aspectRatio > 3.7 and contourObj.aspectRatio < 50.5):
+	if (contourObj.fltArea > 500 and contourObj.fltArea < 1600 and  contourObj.aspectRatio > 2 and contourObj.aspectRatio < 5):
 
 		M = cv2.moments (contours[i])                  # moments
 
@@ -106,7 +106,7 @@ for i in xrange(len(contours)-1):
 
 		# print cv2.contourArea(contours[i]) , contourObj.aspectRatio, contourObj.yCentroid
 
-		# cv2.rectangle(imgResized, (contourObj.RectX, contourObj.RectY), (contourObj.RectX + contourObj.RectWidth , contourObj.RectY + contourObj.RectHeight), (255,255,0), 2)
+		cv2.rectangle(imgResized, (contourObj.RectX, contourObj.RectY), (contourObj.RectX + contourObj.RectWidth , contourObj.RectY + contourObj.RectHeight), (255,255,0), 2)
 
 # cv2.imshow ("Contours Found After LBP", imgResized)
 # cv2.waitKey(0)
@@ -116,7 +116,7 @@ maxCentroid, minCentroid = max(yCentroid), min(yCentroid)
 # for x in xrange (imgShape[1], 20):
 crossingCount = 0
 
-for y in xrange (minCentroid, maxCentroid, 10):
+for y in xrange (minCentroid, maxCentroid, 20):
 
 	match = 0;
 	possibleCrossingContours = []

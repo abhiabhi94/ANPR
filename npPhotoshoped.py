@@ -2,17 +2,17 @@ import cv2
 import operator
 import numpy as np
 
-MIN_CONTOUR_AREA = 100.0
-MAX_CONTOUR_AREA = 800.0
+MIN_CONTOUR_AREA = 800.0
+MAX_CONTOUR_AREA = 4500.0
 RESIZED_IMAGE_WIDTH = 20
 RESIZED_IMAGE_HEIGHT = 20
-MIN_CHARACTER_AREA = 10
-MAX_CHARACTER_AREA = 150
+MIN_CHARACTER_AREA = 100
+MAX_CHARACTER_AREA = 1000
 MIN_ASPECTRATIO = 3
-MAX_ASPECTRATIO = 7
+MAX_ASPECTRATIO = 10
 MIN_ASPECTRATIO_CHAR = 0.1
-MAX_ASPECTRATIO_CHAR = 0.9
-PATH = 'testImages/sample14.jpg'
+MAX_ASPECTRATIO_CHAR = 1.5
+PATH = 'FINL/1.jpg'
 FILE = "/tmp/numberPlateInfo.npy"
 numberPlateCoordinates = []
 
@@ -131,7 +131,7 @@ def numberPlateCategorization(sumBGR , characterCount):
 
 def states(a):
 
-	print "The vehicle belongs to the state:",
+	print "The vehicle belongs to the state:"
 
 	if(a[0] == 'A' and a[1] == 'N'):
 
@@ -200,10 +200,6 @@ def states(a):
 	elif(a[0] == 'U' and a[1] == 'K'):
 		
 		print "Uttrakhand"
-
-	elif(a[0] == 'U' and a[1] == 'P'):
-
-		print "Uttar Pradesh"
 	
 	elif(a[0] == 'K' and a[1] == 'A'):
 		
@@ -334,7 +330,7 @@ def main():
 					
 					characters.append (plateContourWithData)
 
-			if (len(characters) >= 8 and len(characters) < 11):
+			if (len(characters) >= 5 and len(characters) < 11):
 
 				cv2.rectangle(imgCopy, (possiblyValidContour.intRectX, possiblyValidContour.intRectY), (possiblyValidContour.intRectX + possiblyValidContour.intRectWidth, possiblyValidContour.intRectY + possiblyValidContour.intRectHeight ),( 0, 255, 0 ),2 )
 				possiblyValidContour.contourCharacters = characters
@@ -346,16 +342,15 @@ def main():
 
 		noOfPlatesDetected = 0
 		sahiWaliNoPlate.sort ( key = operator.attrgetter("intRectX"))
-		print "Total vehicles detected:", len(sahiWaliNoPlate)
+		print "Total plates detected:", len(sahiWaliNoPlate)
 
 		### Going through the Number Plates found ###
 		for noPlate in sahiWaliNoPlate:
 
 			imgROI = img [noPlate.intRectY * resizingParameter : (noPlate.intRectY + noPlate.intRectHeight ) * resizingParameter, noPlate.intRectX * resizingParameter : (noPlate.intRectX + noPlate.intRectWidth) * resizingParameter]
 			numberPlateCoordinates.append([int(noPlate.intRectX * resizingParameter)  , int(noPlate.intRectY* resizingParameter) , int(noPlate.intRectHeight* resizingParameter) , int(noPlate.intRectWidth* resizingParameter) ])
+			
 			noOfPlatesDetected +=1
-			cv2.imshow("Number Plates"+ str(noOfPlatesDetected), imgROI)
-			cv2.waitKey(0)
 			noPlate.contourCharacters.sort( key = operator.attrgetter("intRectX"))
 
 			characterCount = 0
@@ -397,6 +392,6 @@ def main():
 
 			resizingParameter += increment
 	
-	writeToFile(resizingParameter)
+	# writeToFile(resizingParameter)
 
 main()                   
